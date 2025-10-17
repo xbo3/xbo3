@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GG2 · 프로모션 상세</title>
+<style>
+  :root{ --txt:#eaf0f6; --stroke:rgba(255,255,255,.08) }
+  *{box-sizing:border-box} html,body{height:100%;margin:0;background:#0b0e13;color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,'Noto Sans KR',sans-serif}
+  .wrap{max-width:940px;margin:0 auto;padding:20px}
+  .hero{border:1px solid var(--stroke);border-radius:14px;overflow:hidden;background:#0f131a}
+  .hero img{width:100%;display:block;height:360px;object-fit:cover}
+  .title{font-size:22px;font-weight:900;margin:10px 0}
+  .actions{display:flex;gap:10px;margin:10px 0}
+  a.btn{padding:10px 14px;border-radius:10px;border:1px solid var(--stroke);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));color:#fff;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="actions">
+    <a class="btn" href="promo.html">← 프로모션 목록</a>
+    <a class="btn" href="index.html">메인으로</a>
+  </div>
+  <article id="view">
+    <div class="hero"><img id="img" src="assets/card2.png" alt=""></div>
+    <h1 class="title" id="title">제목</h1>
+  </article>
+</div>
+
+<script>
+  function getPromos(){ return JSON.parse(localStorage.getItem('promos')||'[]'); }
+  const qs = new URLSearchParams(location.search);
+  const slug = qs.get('slug');
+  const item = getPromos().find(p=>p.slug===slug);
+  if(item){
+    document.getElementById('title').textContent = item.title;
+    if(item.img) document.getElementById('img').src = item.img;
+  } else {
+    document.getElementById('title').textContent = '프로모션을 찾을 수 없습니다.';
+  }
+</script>
+</body>
+</html>

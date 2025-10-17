@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GG2 · 프로모션</title>
+<style>
+  :root{ --txt:#eaf0f6; --stroke:rgba(255,255,255,.08); }
+  *{box-sizing:border-box} html,body{height:100%;margin:0;background:#0b0e13;color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,'Noto Sans KR',sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  h1{margin:0;font-size:20px}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap}
+  .tab{padding:8px 12px;border-radius:10px;border:1px solid var(--stroke);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));cursor:pointer}
+  .tab.active{border-color:#57b2ff;box-shadow:0 0 0 3px rgba(87,178,255,.25)}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+  .card{border:1px solid var(--stroke);border-radius:12px;overflow:hidden;background:#0f131a;cursor:pointer}
+  .card img{width:100%;height:180px;object-fit:cover;display:block}
+  .card .ttl{padding:10px;font-weight:900}
+  .admin-only{display:none}.is-admin .admin-only{display:inline-flex}
+  .modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:100}
+  .modal.show{display:flex} .modal-dim{position:absolute; inset:0; background:rgba(0,0,0,.55)}
+  .modal-sheet{position:relative; width:min(640px,92vw); background:#0f131a; border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:16px}
+  form{display:grid;gap:10px} input,select{height:42px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:#0b0e13;color:#fff;padding:0 12px}
+  button.btn{height:42px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:linear-gradient(180deg,#7bc7ff,#3aa2ff);color:#001018;font-weight:900;cursor:pointer}
+  @media(max-width:800px){ .grid{grid-template-columns:repeat(2,1fr)} } @media(max-width:520px){ .grid{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>프로모션</h1>
+    <div class="actions">
+      <button id="btnUpload" class="btn admin-only">프로모션 업로드</button>
+      <a class="tab" href="index.html">← 메인으로</a>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <a class="tab" data-cat="official" href="#official">공식프로모션</a>
+    <a class="tab" data-cat="partner"  href="#partner">파트너프로모션</a>
+    <a class="tab" data-cat="now"      href="#now">지금진행중</a>
+    <a class="tab" data-cat="join"     href="#join">프로모션참여</a>
+  </nav>
+
+  <section class="grid" id="promoGrid"></section>
+</div>
+
+<!-- Upload Modal -->
+<div id="upModal" class="modal" aria-hidden="true">
+  <div class="modal-dim" data-close></div>
+  <div class="modal-sheet" role="dialog" aria-modal="true">
+    <h3 style="margin-top:0">프로모션 업로드</h3>
+    <form id="uploadForm">
+      <select name="cat" required>
+        <option value="official">공식프로모션</option>
+        <option value="partner">파트너프로모션</option>
+        <option value="now">지금진행중</option>
+        <option value="join">프로모션참여</option>
+      </select>
+      <input type="text" name="title" placeholder="제목" required />
+      <input type="url" name="img" placeholder="이미지 URL (선택)" />
+      <button class="btn" type="submit">업로드</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  const isAdmin = new URLSearchParams(location.search).get('admin')==='1';
+  if(isAdmin) document.body.classList.add('is-admin');
+
+  const grid = document.getElementById('promoGrid');
+  const tabs = document.querySelectorAll('.tab[data-cat]');
+
+  function getPromos(){
+    const seed = localStorage.getItem('promos');
+    if(seed) return JSON.parse(seed);
+    const samples = [
+      {slug:'official-1', cat:'official', title:'공식 A', img:''},
+      {slug:'partner-1',  cat:'partner',  title:'파트너 B', img:''},
+      {slug:'now-1',      cat:'now',      title:'진행중 C', img:''},
+      {slug:'join-1',     cat:'join',     title:'참여 D', img:''},
+    ];
+    localStorage.setItem('promos', JSON.stringify(samples));
+    return samples;
+  }
+  function activeCatFromHash(){
+    const cat = location.hash.replace('#','') || 'official';
+    tabs.forEach(t=> t.classList.toggle('active', t.dataset.cat===cat));
+    render(cat);
+  }
+  function render(cat){
+    const promos = getPromos().filter(p=>p.cat===cat);
+    grid.innerHTML = promos.map(p=>`
+      <article class="card" data-slug="\${p.slug}">
+        <img src="\${p.img || 'assets/card1.png'}" alt="\${p.title}">
+        <div class="ttl">\${p.title}</div>
+      </article>`).join('');
+    grid.querySelectorAll('.card').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const slug = el.getAttribute('data-slug');
+        location.href = 'promo_detail.html?slug='+encodeURIComponent(slug);
+      });
+    });
+  }
+  window.addEventListener('hashchange', activeCatFromHash);
+  activeCatFromHash();
+
+  const upModal = document.getElementById('upModal');
+  function openUp(){ if(!isAdmin) return; upModal.classList.add('show'); }
+  function closeUp(){ upModal.classList.remove('show'); }
+  document.getElementById('btnUpload').addEventListener('click', openUp);
+  upModal.addEventListener('click', e=>{ if(e.target.hasAttribute('data-close')) closeUp(); });
+  document.getElementById('uploadForm').addEventListener('submit', e=>{
+    e.preventDefault();
+    if(!isAdmin) return alert('관리자 전용');
+    const fd = new FormData(e.currentTarget);
+    const items = getPromos();
+    const slug = (fd.get('cat')+'-'+Date.now());
+    items.unshift({ slug, cat: fd.get('cat'), title: fd.get('title'), img: fd.get('img')||'' });
+    localStorage.setItem('promos', JSON.stringify(items));
+    closeUp(); render(fd.get('cat'));
+  });
+</script>
+</body>
+</html>

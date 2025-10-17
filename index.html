@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GG2 · 메인</title>
+<style>
+  :root{ --txt:#eaf0f6; --stroke:rgba(255,255,255,.08); --promo-h:180px; --hero-aspect:1/1; --row-speed:4s; --care-speed:1.4s; }
+  *{box-sizing:border-box} html,body{height:100%;margin:0;background:#0b0e13;color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,'Noto Sans KR',sans-serif}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:95vw;margin:0 auto;padding:0 2.5vw}
+  .grid{display:grid;grid-template-columns:280px 1fr;gap:18px;margin-top:18px}
+  .panel{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid var(--stroke);border-radius:12px}
+  .left{padding:10px}
+  .auth-bar{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .auth{height:38px;border-radius:12px;border:1px solid rgba(255,255,255,.14);font-weight:900;cursor:pointer}
+  .btn-join{background:linear-gradient(180deg,#b08cff,#7e65ff);color:#0b0e13}
+  .btn-login{background:linear-gradient(180deg,#7bc7ff,#3aa2ff);color:#001018}
+  .care-toggle{height:40px;border-radius:10px;border:1px solid var(--stroke);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));color:#fff;font-weight:800;cursor:pointer;width:100%}
+  .group{margin-top:12px}
+  .group-hd{height:38px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 10px;border-radius:10px;border:1px solid var(--stroke);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));font-weight:800;color:#fff;width:100%;text-align:left;cursor:pointer}
+  .group-body{max-height:0;overflow:hidden;transition:max-height 1.2s ease;padding:0 10px}
+  .group.open .group-body{max-height:800px}
+  .item{height:36px;display:grid;grid-template-columns:12px 1fr auto;align-items:center;gap:10px;margin:6px 0;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));padding:0 10px;color:#fff}
+  .item .dot{width:7px;height:7px;border-radius:999px;background:#ffc23d;box-shadow:0 0 8px rgba(255,194,61,.45)}
+  .center{position:relative;padding:14px 14px 14px 0}
+  .hero-row{overflow:hidden;height:0;transition:height var(--row-speed) cubic-bezier(.22,.61,.36,1)}
+  .open .hero-row{height:var(--hero-open-h)}
+  .hero-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .hero-card{aspect-ratio:var(--hero-aspect);border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.08);background:#0b0e13;transform:translate3d(0,14px,0);opacity:0;transition:transform var(--care-speed) cubic-bezier(.22,1,.36,1), opacity var(--care-speed) cubic-bezier(.22,1,.36,1)}
+  .hero-card.show{transform:translate3d(0,0,0);opacity:1}
+  .hero-card .img{width:100%;height:100%;background-size:cover;background-position:center}
+  .hero-label{position:absolute;left:14px;bottom:14px;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 10px;display:flex;gap:8px;align-items:center}
+  .hero-label .title{font-weight:900;font-size:12px;padding:4px 6px;border-radius:8px;border:1px solid rgba(255,255,255,.18)}
+  .hero-label .name{font-weight:800}.hero-label .name small{opacity:.85;margin-left:4px}
+  .tg-mini{margin-left:auto;height:28px;min-width:34px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(18,20,26,.9);cursor:pointer}
+  @keyframes softPulse{from{box-shadow:0 0 0 rgba(32,255,216,.0)}to{box-shadow:0 0 28px rgba(32,255,216,.45)}}
+  .hero-card:hover{animation:softPulse 3s ease-in-out infinite alternate}
+  .promo-head{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:var(--promo-h);gap:12px;margin:12px 0}
+  .promo-head .big,.promo-head .cell{position:relative;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.08);background:#0b0e13}
+  .promo-head .big{grid-column:1;grid-row:1 / span 2}
+  .promo-head .right-grid{grid-column:2;grid-row:1 / span 2;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,var(--promo-h));gap:12px}
+  .promo-head .ttl{position:absolute;left:14px;top:10px;font-weight:900;opacity:.9}
+  .content{margin-top:12px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02))}
+  .content-section{display:none;padding:16px 14px}.content-section.active{display:block}
+  .content-section h2{margin:4px 0 10px;font-size:20px;font-weight:900;color:#fff}
+  .modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:100}
+  .modal.show{display:flex}
+  .modal-dim{position:absolute; inset:0; background:rgba(0,0,0,.55); backdrop-filter: blur(2px)}
+  .modal-sheet{position:relative; width:min(900px,92vw); background:#0f131a; border:1px solid rgba(255,255,255,.1); border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.5); transform:translateY(12px); opacity:0; transition:transform .5s cubic-bezier(.22,1,.36,1), opacity .5s cubic-bezier(.22,1,.36,1)}
+  .modal.show .modal-sheet{transform:translateY(0); opacity:1}
+  .modal-head{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08)}
+  .modal-close{width:34px; height:34px; border-radius:10px; border:1px solid rgba(255,255,255,.14); background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03)); color:#fff; cursor:pointer}
+  .modal-body{display:grid; grid-template-columns: 1fr 1fr; gap:16px; padding:16px}
+  .join-form{display:grid; gap:12px}
+  .join-form label{display:grid; gap:6px; font-weight:700}
+  .join-form input{height:42px; border-radius:12px; border:1px solid rgba(255,255,255,.14); background:#0b0e13; color:#fff; padding:0 12px}
+  .btn-cta{height:44px; border-radius:12px; border:1px solid rgba(255,255,255,.16); background:linear-gradient(180deg,#7bc7ff,#3aa2ff); color:#001018; font-weight:900; cursor:pointer}
+  html{scroll-behavior:smooth}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <main class="grid">
+    <aside class="panel left" id="leftNav">
+      <div class="auth-bar">
+        <button class="auth btn-join">가입</button>
+        <button class="auth btn-login">로그인</button>
+      </div>
+      <button class="care-toggle" id="careBtn">VIP HOST CALL ▾</button>
+
+      <div class="group open">
+        <button class="group-hd"><span>카테고리</span><span>›</span></button>
+        <div class="group-body">
+          <a class="item" href="#sec-partner-service"><span class="dot"></span><span>🎫 파트너서비스</span><span></span></a>
+          <a class="item" href="#sec-benefits"><span class="dot"></span><span>🧾 등급별 혜택</span><span></span></a>
+          <a class="item" href="#sec-partner-greeting"><span class="dot"></span><span>🎲 파트너인사</span><span></span></a>
+          <a class="item" href="#sec-contact-write"><span class="dot"></span><span>🧩 문의하기</span><span></span></a>
+          <a class="item" href="#sec-contact"><span class="dot"></span><span>🧩 문의</span><span></span></a>
+          <a class="item" href="#sec-preference"><span class="dot"></span><span>⭐ 선호도체크</span><span></span></a>
+          <a class="item" href="#sec-quiz-coupon"><span class="dot"></span><span>🏛️ 퀴즈풀고쿠폰받기</span><span></span></a>
+          <a class="item" href="#sec-coupon-apply"><span class="dot"></span><span>✨ 쿠폰신청하기</span><span></span></a>
+        </div>
+      </div>
+
+      <div class="group">
+        <button class="group-hd"><span>프로모션</span><span>›</span></button>
+        <div class="group-body">
+          <a class="item" href="promo.html#official"><span class="dot"></span><span>공식프로모션</span></a>
+          <a class="item" href="promo.html#partner"><span class="dot"></span><span>파트너프로모션</span></a>
+          <a class="item" href="promo.html#now"><span class="dot"></span><span>지금진행중</span></a>
+          <a class="item" href="promo.html#join"><span class="dot"></span><span>프로모션참여</span></a>
+        </div>
+      </div>
+    </aside>
+
+    <section class="panel center" id="centerPanel">
+      <div class="hero-row" id="heroRow">
+        <div class="hero-grid" id="heroGrid">
+          <a class="hero-card" id="hero1"><div class="img" style="background-image:url('assets/hero1.jpg')"></div><div class="hero-label"><span class="title">Mystery Host</span><span class="name">Jayme Sun <small>(제이미 선)</small></span></div></a>
+          <a class="hero-card" id="hero2"><div class="img" style="background-image:url('assets/hero2.jpg')"></div><div class="hero-label"><span class="title">Executive Host</span><span class="name">Tom Woo <small>(탐 우)</small></span><button type="button" class="tg-mini" aria-label="Telegram">↗</button></div></a>
+          <a class="hero-card" id="hero3"><div class="img" style="background-image:url('assets/hero3.jpg')"></div><div class="hero-label"><span class="title">Executive Host</span><span class="name">Jay Hong <small>(재 홍)</small></span></div></a>
+        </div>
+      </div>
+
+      <section class="promo-head" aria-label="Top promo head">
+        <a class="big" id="slotJoin"><span class="ttl">가입창 바로가기</span></a>
+        <div class="right-grid">
+          <a class="cell" href="promo.html#official"><span class="ttl">공식프로모션</span></a>
+          <a class="cell" href="promo.html#partner"><span class="ttl">파트너프로모션</span></a>
+          <a class="cell" href="promo.html#now"><span class="ttl">지금진행중</span></a>
+          <a class="cell" href="promo.html#join"><span class="ttl">프로모션참여</span></a>
+        </div>
+      </section>
+
+      <div class="content">
+        <section id="sec-partner-service" class="content-section active"><h2>파트너서비스</h2></section>
+        <section id="sec-benefits" class="content-section"><h2>등급별 혜택</h2></section>
+        <section id="sec-quiz-coupon" class="content-section"><h2>퀴즈풀고 쿠폰받기</h2></section>
+        <section id="sec-promo-official" class="content-section"><h2>공식프로모션</h2></section>
+        <section id="sec-promo-partner" class="content-section"><h2>파트너프로모션</h2></section>
+        <section id="sec-promo-now" class="content-section"><h2>지금진행중</h2></section>
+        <section id="sec-promo-join" class="content-section"><h2>프로모션참여</h2></section>
+        <section id="sec-partner-greeting" class="content-section"><h2>파트너인사</h2></section>
+        <section id="sec-contact-write" class="content-section"><h2>문의하기</h2></section>
+        <section id="sec-contact" class="content-section"><h2>문의</h2></section>
+        <section id="sec-preference" class="content-section"><h2>선호도체크</h2></section>
+        <section id="sec-coupon-apply" class="content-section"><h2>쿠폰신청하기</h2></section>
+        <section id="sec-coupon-new" class="content-section"><h2>신규무료쿠폰</h2></section>
+        <section id="sec-coupon-weekly" class="content-section"><h2>주간플레이쿠폰</h2></section>
+        <section id="sec-coupon-deposit-double" class="content-section"><h2>입금더블업쿠폰</h2></section>
+        <section id="sec-coupon-daily" class="content-section"><h2>일일플레이쿠폰</h2></section>
+        <section id="sec-coupon-host" class="content-section"><h2>담당HOST쿠폰</h2></section>
+        <section id="sec-coupon-surprise" class="content-section"><h2>돌발쿠폰 OFF</h2></section>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Join Modal -->
+<div id="joinModal" class="modal" aria-hidden="true">
+  <div class="modal-dim" data-close></div>
+  <div class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="joinTitle">
+    <div class="modal-head">
+      <h3 id="joinTitle">가입창</h3>
+      <button class="modal-close" data-close aria-label="닫기">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="joinForm" class="join-form">
+        <label>아이디<input type="text" name="userid" required placeholder="아이디"/></label>
+        <label>성함<input type="text" name="fullname" required placeholder="성함"/></label>
+        <label>비밀번호<input type="password" name="pw" required placeholder="비밀번호"/></label>
+        <label>연락처<input type="tel" name="phone" required placeholder="연락처"/></label>
+        <button type="submit" class="btn-cta">가입완료</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // hero dynamic height (square)
+  const centerEl = document.getElementById('centerPanel');
+  const heroRow  = document.getElementById('heroRow');
+  function cardWidth(){ const c = document.querySelector('.hero-card'); return c ? c.getBoundingClientRect().width : 0; }
+  function setHeroOpenHeight(){ const h = cardWidth(); document.documentElement.style.setProperty('--hero-open-h', h + 'px'); return h; }
+  window.addEventListener('resize', ()=>{ if(centerEl.classList.contains('open')) heroRow.style.height = setHeroOpenHeight() + 'px'; });
+  function openCareSeq(){
+    centerEl.classList.add('open');
+    const target = setHeroOpenHeight();
+    heroRow.style.height = '0px'; void heroRow.offsetHeight;
+    heroRow.style.height = target + 'px';
+    const cards = [document.getElementById('hero1'), document.getElementById('hero2'), document.getElementById('hero3')];
+    cards.forEach(c=> c && c.classList.remove('show'));
+    const startDelay = 200, step = 500;
+    if(cards[0]) setTimeout(()=> cards[0].classList.add('show'), startDelay);
+    if(cards[1]) setTimeout(()=> cards[1].classList.add('show'), startDelay+step);
+    if(cards[2]) setTimeout(()=> cards[2].classList.add('show'), startDelay+step*2);
+  }
+  function closeCare(){ centerEl.classList.remove('open'); heroRow.style.height = '0px'; document.querySelectorAll('.hero-card').forEach(c=> c.classList.remove('show')); }
+  document.getElementById('careBtn').addEventListener('click', (e)=>{ e.preventDefault(); const willOpen = !centerEl.classList.contains('open'); willOpen ? openCareSeq() : closeCare(); });
+
+  // telegram (hero2 mini icon)
+  document.querySelector('.tg-mini')?.addEventListener('click', (e)=>{ e.stopPropagation(); window.open('https://t.me/woo247','_blank','noopener'); });
+
+  // left accordion toggle
+  document.getElementById('leftNav').addEventListener('click', (e)=>{
+    const hd = e.target.closest('.group-hd'); if(hd){ e.preventDefault(); hd.closest('.group').classList.toggle('open'); }
+  });
+
+  // hash -> section
+  function activateFromHash(){
+    const id = location.hash.replace('#','');
+    if(!id) return;
+    document.querySelectorAll('.content-section').forEach(s=> s.classList.remove('active'));
+    const t = document.getElementById(id);
+    if(t) t.classList.add('active');
+  }
+  window.addEventListener('hashchange', activateFromHash);
+  activateFromHash();
+
+  // join modal
+  const joinModal = document.getElementById('joinModal');
+  function openJoin(){ joinModal.classList.add('show'); }
+  function closeJoin(){ joinModal.classList.remove('show'); }
+  document.getElementById('slotJoin').addEventListener('click', (e)=>{ e.preventDefault(); openJoin(); });
+  document.querySelector('.btn-join').addEventListener('click', (e)=>{ e.preventDefault(); openJoin(); });
+  joinModal.addEventListener('click', (e)=>{ if(e.target.hasAttribute('data-close')) closeJoin(); });
+  joinModal.querySelector('.modal-close')?.addEventListener('click', closeJoin);
+  document.getElementById('joinForm').addEventListener('submit', (e)=>{ e.preventDefault(); closeJoin(); alert('가입 요청이 접수되었습니다.'); });
+</script>
+</body>
+</html>
