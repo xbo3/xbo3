@@ -1,6 +1,5 @@
 
 
-
 <!doctype html>
 <html lang="ko">
 <head>
@@ -100,7 +99,7 @@
   #linkModal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:110}
   #linkModal.show{display:flex}
   #linkModal .dim{position:absolute;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(2px)}
-  #linkModal .sheet{position:relative;width:min(560px,92vw);background:#0f131a;border:1px solid rgba(255,255,255,.1);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);padding:16px}
+  #linkModal .sheet{position:relative;width:min( 900px,92vw);background:#0f131a;border:1px solid rgba(255,255,255,.1);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);padding:16px}
   #linkModal .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
   #linkModal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
   #linkModal .btn{height:40px;padding:0 14px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));color:#fff;cursor:pointer}
@@ -118,30 +117,29 @@
       </div>
       <button class="care-toggle" id="careBtn">당당호출 ▾</button>
 
-    <aside>
-    <div class="group">
+      <div class="group">
         <button class="group-hd"><span>프로모션</span><span>›</span></button>
         <div class="group-body">
-            <a class="item" href="promo.html#official"><span class="dot"></span><span>공식프로모션</span></a>
-            <a class="item" href="promo.html#partner"><span class="dot"></span><span>파트너프로모션</span></a>
-            <a class="item" href="promo.html#now"><span class="dot"></span><span>지금진행중</span></a>
-            <a class="item" href="promo.html#join"><span class="dot"></span><span>프로모션참여</span></a>
+          <a class="item" href="promo.html#official"><span class="dot"></span><span>공식프로모션</span></a>
+          <a class="item" href="promo.html#partner"><span class="dot"></span><span>파트너프로모션</span></a>
+          <a class="item" href="promo.html#now"><span class="dot"></span><span>지금진행중</span></a>
+          <a class="item" href="promo.html#join"><span class="dot"></span><span>프로모션참여</span></a>
         </div>
-    </div>
+      </div>
 
-    <div class="group open">
+      <div class="group open">
         <button class="group-hd"><span>카테고리</span><span>›</span></button>
         <div class="group-body">
-            <a class="item" href="#sec-partner-service"><span class="dot"></span><span>🎫 파트너서비스</span><span></span></a>
-            <a class="item" href="#sec-benefits"><span class="dot"></span><span>🧾 등급별 혜택</span><span></span></a>
-            <a class="item" href="#sec-partner-greeting"><span class="dot"></span><span>🎲 파트너인사</span><span></span></a>
-            <a class="item" href="#sec-contact"><span class="dot"></span><span>🧩 문의</span><span></span></a>
-            <a class="item" href="#sec-preference"><span class="dot"></span><span>⭐ 선호도체크</span><span></span></a>
-            <a class="item" href="#sec-quiz-coupon"><span class="dot"></span><span>🏛️ 퀴즈풀고쿠폰받기</span><span></span></a>
-            <a class="item" href="#sec-coupon-apply"><span class="dot"></span><span>✨ 쿠폰신청하기</span><span></span></a>
+          <a class="item" href="#sec-partner-service"><span class="dot"></span><span>🎫 파트너서비스</span><span></span></a>
+          <a class="item" href="#sec-benefits"><span class="dot"></span><span>🧾 등급별 혜택</span><span></span></a>
+          <a class="item" href="#sec-partner-greeting"><span class="dot"></span><span>🎲 파트너인사</span><span></span></a>
+          <a class="item" href="#sec-contact"><span class="dot"></span><span>🧩 문의</span><span></span></a>
+          <a class="item" href="#sec-preference"><span class="dot"></span><span>⭐ 선호도체크</span><span></span></a>
+          <a class="item" href="#sec-quiz-coupon"><span class="dot"></span><span>🏛️ 퀴즈풀고쿠폰받기</span><span></span></a>
+          <a class="item" href="#sec-coupon-apply"><span class="dot"></span><span>✨ 쿠폰신청하기</span><span></span></a>
         </div>
-    </div>
-</aside>
+      </div>
+    </aside>
 
     <section class="panel center" id="centerPanel">
       <div class="hero-row" id="heroRow">
@@ -217,11 +215,15 @@
       <h3 id="linkTitle">가입 완료</h3>
       <button class="btn" data-close aria-label="닫기">×</button>
     </div>
-    <p>쿠폰받으실곳 가입하구  하신분만
-선호도 1분 체크하고 쿠폰받기
-</p>
-    <p><a class="theLink" id="theLink" href="https://t.me/woo247" target="_self" rel="noopener">https://t.me/woo247</a></p>
-    <div class="actions">
+    <div class="body">
+      <p style="font-weight:800">가입을 축하합니다.</p>
+      <p>삽입된 링크</p>
+      <p><a class="theLink" id="theLink" href="https://t.me/woo247" target="_self" rel="noopener">https://t.me/woo247</a></p>
+      <p>가입완료하신분은 1분선호도체크하고</p>
+      <p>쿠폰받기</p>
+      <p style="opacity:.8">*원치 않으시면 패스하셔도 됩니다.</p>
+    </div>
+<div class="actions">
       <a class="btn primary" id="goNow" href="https://t.me/woo247" target="_self">바로 이동</a>
     </div>
   </div>
