@@ -2,355 +2,290 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>index – 히어로/소켓/왕빅 + 슬라이드 전환</title>
-<style>
-  :root{ --bg:#0e1216; --panel:#11161c; --card:#0f1419; --stroke:#1e2731;
-         --fg:#e7eef6; --muted:#9fb1c3; --time:3.75s; --ease:cubic-bezier(.2,.7,.2,1); --radius:16px;
-         --hero-dur:2s; --hero-ease:cubic-bezier(.15,.85,.1,1); /* 강한 ease-out */
-         --time-page:7.5s; /* 페이지 전환은 기본의 2배 느리게 */ }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Noto Sans KR,sans-serif}
+<meta charset="utf-8" />
 
-  .page{display:grid;grid-template-columns:280px 1fr;gap:18px;min-height:100vh;padding:18px}
-  aside{background:linear-gradient(180deg,#11161b,#0e1318);border:1px solid var(--stroke);border-radius:14px;padding:14px}
-  .group{margin:12px 0}
-  .group>h4{margin:0 0 8px;font-weight:800;color:#cfe0f2;cursor:pointer;user-select:none}
-  .group.collapsed > .item{display:none}
-  .item{padding:10px 12px;border:1px solid #202a35;border-radius:10px;background:#0f1419;margin-top:8px;cursor:pointer;transition:box-shadow .25s ease,border-color .25s ease}
-  .item.neon{box-shadow:0 0 10px rgba(122,199,255,.35),0 0 22px rgba(122,199,255,.25);border-color:#3b6ea8}
-  .item.neon-blink{animation:neonBlink 1.6s ease-in-out infinite}
-  @keyframes neonBlink{
-    0%,100%{box-shadow:0 0 8px rgba(122,199,255,.28),0 0 18px rgba(122,199,255,.20)}
-    50%{box-shadow:0 0 14px rgba(122,199,255,.45),0 0 28px rgba(122,199,255,.35)}
-  }
-  .pill-row{display:flex;gap:8px;margin:8px 0 6px}
-  .pill{flex:1;padding:10px 0;border-radius:999px;border:0;font-weight:800;color:white;background:linear-gradient(180deg,#5d8cff,#406eff);cursor:pointer}
-  .pill.secondary{background:linear-gradient(180deg,#2b3240,#1b2230);color:#cfe0f2;border:1px solid #2a3442}
-  .vip{width:100%;padding:10px 12px;border-radius:12px;background:#0f151c;border:1px solid #233042;color:#cfe0f2;text-align:left;cursor:pointer}
-
-  .center{position:relative}
-  /* HERO */
-  .hero-row{overflow:hidden;transition:max-height .6s var(--ease);} /* 펼침/접힘 */
-  .center.hero-collapsed .hero-row{max-height:0!important}
-  .hero-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px}
-  .hero-card{position:relative;background:linear-gradient(180deg,#0f151b,#0d1217);border:1px solid #223040;border-radius:18px;min-height:300px;
-             transform:translateY(-110%);opacity:0;transition:transform var(--hero-dur) var(--hero-ease),opacity .6s ease}
-  .hero-card.enter{transform:translateY(0);opacity:1}
-  .hero-card .title{position:absolute;left:16px;bottom:14px;font-weight:800}
-  .tg{position:absolute;right:12px;bottom:12px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#1f2b3a;border:1px solid #34506e}
-  .tg:before{content:"✈";font-size:18px}
-
-  /* SOCKETS (상단 한 줄 세트: 좌 빅1 + 우 스몰4) */
-  .sockets-wrap{overflow:hidden;will-change:transform,max-height,opacity}
-  .sockets{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:170px;gap:14px;margin-bottom:14px}
-  .s-big{grid-column:1 / span 2;grid-row:1 / span 2}
-  .s-card{background:linear-gradient(180deg,#0f151b,#0d1217);border:1px solid #223040;border-radius:18px}
-
-  /* CONTENT (왕빅/페이지) */
-  .content-wrap{will-change:transform}
-  .king{background:linear-gradient(180deg,#121922,#0f151c);border:1px solid #223040;border-radius:18px;min-height:calc(100vh - 180px);padding:18px}
-  .king h3{margin:0 0 8px}
-  .muted{color:var(--muted)}
-
-  /* 슬라이드 전환 상태 */
-  .center.swap .sockets-wrap{opacity:0; transform:translateY(60px);}   
-  .anim-sockets{transition:transform var(--time) var(--ease), opacity .6s ease;}  
-  .anim-content{transition:transform var(--time-page) var(--ease);}  
-
-  /* 페이지 인 애니메이션(카테고리 화면 보일 때) */
-  .content-section{display:none}
-  .content-section.active{display:block;animation:pageIn 2.8125s var(--ease)}
-  @keyframes pageIn{from{opacity:0} to{opacity:1}} /* 위치 이동 없이 페이드만: 과상승 방지 */
-
-  /* 네온/프레임 효과 */
-  .moving .sockets, .moving .king{outline:2px solid rgba(255,255,140,.45);box-shadow:0 0 10px rgba(255,255,140,.45),0 0 24px rgba(255,255,120,.25);border-radius:18px}
-  .neon-pulse{animation:neonPulse 2s ease-in-out 1}
-  @keyframes neonPulse{0%,100%{box-shadow:0 0 0 2px rgba(255,255,140,.55),0 0 10px rgba(255,255,140,.55)}50%{box-shadow:0 0 0 2px rgba(255,255,0,.95),0 0 22px rgba(255,255,120,.95),0 0 40px rgba(255,255,90,.85)}}
-  .item.neon-out{animation:neonOut 1s ease-out forwards}
-  @keyframes neonOut{
-    0%{box-shadow:0 0 14px rgba(122,199,255,.45),0 0 28px rgba(122,199,255,.35);border-color:#3b6ea8}
-    25%{box-shadow:0 0 10px rgba(122,199,255,.30),0 0 20px rgba(122,199,255,.24);border-color:#3a679e}
-    55%{box-shadow:0 0 7px rgba(122,199,255,.20),0 0 14px rgba(122,199,255,.14);border-color:#30557f}
-    80%{box-shadow:0 0 4px rgba(122,199,255,.12),0 0 8px rgba(122,199,255,.08);border-color:#263f60}
-    100%{box-shadow:none;border-color:#202a35}
-  }
-  .framed .content-wrap{outline:4px solid #ff2f2f;outline-offset:-10px;border-radius:20px}
-  .framed .king{box-shadow:0 0 0 4px #ffd400 inset}
-</style>
-</head>
-<body>
-  <div class="page">
-    <aside id="sidebar">
-      <div class="pill-row">
-        <button class="pill">가입</button>
-        <button class="pill secondary">로그인</button>
-      </div>
-      <button id="vipToggle" class="vip">VIP HOST CALL ▾</button>
-
-      <div class="group" data-group="category">
-        <h4>카테고리 ›</h4>
-        <div class="item" data-go="sec-partner-service">파트너서비스</div>
-        <div class="item" data-go="sec-benefits">등급별 혜택</div>
-        <div class="item" data-go="sec-partner-greet">파트너인사</div>
-        <div class="item" data-go="sec-contact-write">문의하기</div>
-        <div class="item" data-go="sec-contact">문의</div>
-        <div class="item" data-go="sec-preference">선호도체크</div>
-        <div class="item" data-go="sec-quiz-coupon">퀴즈풀고쿠폰받기</div>
-        <div class="item" data-go="sec-coupon-apply">쿠폰신청하기</div>
-      </div>
-
-      <div class="group" data-group="promo">
-        <h4>프로모션 ›</h4>
-        <div class="item" data-go="sec-promo-official">공식프로모션</div>
-        <div class="item" data-go="sec-promo-partner">파트너프로모션</div>
-        <div class="item" data-go="sec-promo-now">지금진행중</div>
-        <div class="item" data-go="sec-promo-join">프로모션참여하기</div>
-      </div>
-
-      <div class="group" data-group="coupon">
-        <h4>💸 쿠폰 💸 ›</h4>
-        <div class="item" data-go="sec-coupon-new">💸 신규무료쿠폰</div>
-        <div class="item" data-go="sec-coupon-weekly">💸 주간플레이쿠폰</div>
-        <div class="item" data-go="sec-coupon-deposit">💸 입금더블업쿠폰</div>
-        <div class="item" data-go="sec-coupon-daily">💸 일일플레이쿠폰</div>
-        <div class="item" data-go="sec-coupon-host">💸 담당HOST쿠폰</div>
-        <div class="item" data-go="sec-coupon-off">💸 돌발쿠폰 OFF</div>
-      </div>
-    </aside>
-
-    <main class="center hero-collapsed" id="centerPanel">
-      <!-- HERO (접힘/펼침) -->
-      <div class="hero-row">
-        <div class="hero-grid" id="heroGrid">
-          <div class="hero-card"><span class="title">Mystery Host</span><span class="tg"></span></div>
-          <div class="hero-card"><span class="title">Executive Host</span><span class="tg"></span></div>
-          <div class="hero-card"><span class="title">Executive Host</span><span class="tg"></span></div>
-        </div>
-      </div>
-
-      <!-- SOCKETS 세트 (좌 빅1 + 우 스몰4) -->
-      <div class="sockets-wrap" id="socketsWrap">
-        <section class="sockets" id="socketsRow">
-          <div class="s-card s-big"></div>
-          <div class="s-card"></div>
-          <div class="s-card"></div>
-          <div class="s-card"></div>
-          <div class="s-card"></div>
-        </section>
-      </div>
-
-      <!-- CONTENT -->
-      <div class="content-wrap" id="contentWrap">
-        <section id="sec-home" class="content-section active"><div class="king">
-          <h3>문의</h3>
-          <p class="muted">FAQ/빠른 답변</p>
-          <p class="muted">※ 카테고리 클릭 시 위 소켓 세트는 아래로 슬라이드되어 사라지고, 아래(왕빅) 영역이 위로 슬라이드되어 해당 페이지가 나타납니다.</p>
-        </div></section>
-
-        <!-- 카테고리 페이지들 -->
-        <section id="sec-partner-service" class="content-section"><div class="king"><h3>파트너서비스</h3></div></section>
-        <section id="sec-benefits" class="content-section"><div class="king"><h3>등급별 혜택</h3></div></section>
-        <section id="sec-partner-greet" class="content-section"><div class="king"><h3>파트너인사</h3></div></section>
-        <section id="sec-contact-write" class="content-section"><div class="king"><h3>문의하기</h3></div></section>
-        <section id="sec-contact" class="content-section"><div class="king"><h3>문의</h3></div></section>
-        <section id="sec-preference" class="content-section"><div class="king"><h3>선호도체크</h3></div></section>
-        <section id="sec-quiz-coupon" class="content-section"><div class="king"><h3>퀴즈풀고쿠폰받기</h3></div></section>
-        <section id="sec-coupon-apply" class="content-section"><div class="king"><h3>쿠폰신청하기</h3></div></section>
-
-        <section id="sec-promo-official" class="content-section"><div class="king"><h3>공식프로모션</h3></div></section>
-        <section id="sec-promo-partner" class="content-section"><div class="king"><h3>파트너프로모션</h3></div></section>
-        <section id="sec-promo-now" class="content-section"><div class="king"><h3>지금진행중</h3></div></section>
-        <section id="sec-promo-join" class="content-section"><div class="king"><h3>프로모션참여하기</h3></div></section>
-
-        <section id="sec-coupon-new" class="content-section"><div class="king"><h3>신규무료쿠폰</h3></div></section>
-        <section id="sec-coupon-weekly" class="content-section"><div class="king"><h3>주간플레이쿠폰</h3></div></section>
-        <section id="sec-coupon-deposit" class="content-section"><div class="king"><h3>입금더블업쿠폰</h3></div></section>
-        <section id="sec-coupon-daily" class="content-section"><div class="king"><h3>일일플레이쿠폰</h3></div></section>
-        <section id="sec-coupon-host" class="content-section"><div class="king"><h3>담당HOST쿠폰</h3></div></section>
-        <section id="sec-coupon-off" class="content-section"><div class="king"><h3>돌발쿠폰 OFF</h3></div></section>
-      </div>
-    </main>
-  </div>
-
+<!-- 똑같이 유지 + 모바일 스케일 스크립트만 추가 -->
+<meta name="viewport" id="vp" content="width=device-width, initial-scale=1" />
 <script>
+/* 모바일에서도 레이아웃은 그대로(데스크탑 1280 기준) 보이게 스케일만 조정.
+   그리드/스타일은 건드리지 않음. */
 (function(){
-  const $ = (s,r=document)=>r.querySelector(s);
-  const $$= (s,r=document)=>Array.from(r.querySelectorAll(s));
-
-  const center = $('#centerPanel');
-  const heroRow = $('.hero-row');
-  const heroGrid = $('#heroGrid');
-  const heroCards = $$('.hero-card', heroGrid);
-  const socketsWrap = $('#socketsWrap');
-  const contentWrap = $('#contentWrap');
-  const vip = $('#vipToggle');
-
-  // HERO helpers
-  function heroNaturalHeight(){
-    const prev = heroRow.style.maxHeight; heroRow.style.maxHeight = 'none';
-    const h = heroRow.scrollHeight; heroRow.style.maxHeight = prev || '0px'; return h;
-  }
-  function openHeroBase(){
-    center.classList.remove('hero-collapsed');
-    heroRow.style.maxHeight = (heroNaturalHeight()||heroRow.scrollHeight||320) + 'px';
-    vip.textContent = 'VIP HOST CALL ▴';
-  }
-  function closeHero(){
-    center.classList.add('hero-collapsed');
-    heroRow.style.maxHeight = '0px';
-    // 카드 위치 초기화
-    heroCards.forEach(c=>c.classList.remove('enter'));
-    vip.textContent = 'VIP HOST CALL ▾';
-  }
-
-  // 순차 등장(좌→우). 각 카드가 70% 진행 시 다음 카드 시작
-  function openHeroSequence(){
-    openHeroBase();
-    const dur = 2000; // ms, --hero-dur 과 동일
-    heroCards.forEach(c=>c.classList.remove('enter'));
-    // 시작 약간 지연하여 max-height 전개와 동조
-    setTimeout(()=>{
-      heroCards[0]?.classList.add('enter');
-      setTimeout(()=>{ heroCards[1]?.classList.add('enter'); }, Math.floor(dur*0.7));
-      setTimeout(()=>{ heroCards[2]?.classList.add('enter'); }, Math.floor(dur*0.7*2));
-    }, 50);
-  }
-
-  // Slide swap: sockets DOWN & fade, content UP (페이지는 2배 느리게)
-  function slideSwapToPage(sectionId){
-    // hide all pages then show chosen
-    $$('.content-section', contentWrap).forEach(s=>{ s.classList.remove('active'); s.style.display='none'; });
-    const page = document.getElementById(sectionId);
-    if(page){ page.style.display='block'; page.classList.add('active'); }
-
-    // 프레임 모드(빨간/노란 박스 표시)
-    center.classList.add('framed');
-
-    // ensure hero is closed before swap
-    closeHero();
-
-    // 이동 중 네온 보더
-    center.classList.add('moving');
-
-    // measure sockets height (current visible height)
-    const h = socketsWrap.getBoundingClientRect().height;
-    socketsWrap.classList.add('anim-sockets');
-    contentWrap.classList.add('anim-content');
-
-    // 준비 상태 (transform 기준으로만 애니메이션)
-    socketsWrap.style.transform = 'translateY(0px)';
-    contentWrap.style.transform = 'translateY(0px)';
-
-    // 시작 프레임
-    requestAnimationFrame(()=>{
-      center.classList.add('swap');
-      socketsWrap.style.transform = 'translateY(' + h + 'px)';   // 아래로
-      contentWrap.style.transform = 'translateY(' + (-h) + 'px)'; // 위로
-    });
-
-    const onEnd = ()=>{
-      socketsWrap.style.display='none';
-      socketsWrap.style.transform='';
-      socketsWrap.classList.remove('anim-sockets');
-      center.classList.remove('swap');
-      contentWrap.style.transform='';
-      contentWrap.classList.remove('anim-content');
-      heroRow.style.maxHeight='0px';
-
-      // 이동 끝 – 네온 반짝 2초
-      const frameTarget = (page && page.querySelector('.king')) || contentWrap;
-      frameTarget.classList.add('neon-pulse');
-      setTimeout(()=>frameTarget.classList.remove('neon-pulse'), 2000);
-
-      center.classList.remove('moving');
-      contentWrap.removeEventListener('transitionend', onEnd);
-    };
-    contentWrap.addEventListener('transitionend', onEnd, {once:true});
-  }
-
-  // expose for tests
-  window.__demo = { slideSwapToPage };
-
-  // Sidebar: 클릭 처리 (아코디언/네온호버/페이지 전환)
-  const sidebar = $('#sidebar');
-  const neonTimers = new WeakMap();
-  function leaving(el, rel){ return !rel || (rel !== el && !el.contains(rel)); }
-  sidebar.addEventListener('click', (e)=>{
-    const h4 = e.target.closest('h4');
-    if(h4){
-      const grp = h4.parentElement; grp.classList.toggle('collapsed');
-      return;
+  var vp=document.getElementById('vp');
+  function applyScale(){
+    var w=window.screen.width; // 디바이스 폭
+    if(w<=820){  // 작은 화면만 스케일링
+      var target=1280;                    // 데스크탑 기준폭 (그리드는 그대로)
+      var s=(w/target);                   // 축소비
+      vp.setAttribute('content','width='+target+', initial-scale='+s.toFixed(3)+', maximum-scale='+s.toFixed(3)+', minimum-scale='+s.toFixed(3)+', user-scalable=no');
+      document.documentElement.classList.add('mobile-desktop');
+    }else{
+      vp.setAttribute('content','width=device-width, initial-scale=1');
+      document.documentElement.classList.remove('mobile-desktop');
     }
-    const item = e.target.closest('.item'); if(!item) return;
-    const id = item.getAttribute('data-go'); if(!id) return;
-    slideSwapToPage(id);
-  });
-  sidebar.addEventListener('pointerover', (e)=>{
-    const it = e.target.closest('.item'); if(!it) return;
-    clearTimeout(neonTimers.get(it));
-    it.classList.remove('neon-out');
-    it.classList.add('neon','neon-blink');
-  }, true);
-  sidebar.addEventListener('pointerout', (e)=>{
-    const it = e.target.closest('.item'); if(!it) return;
-    if(!leaving(it, e.relatedTarget)) return; // 실제로 아이템 밖으로 나간 경우에만 종료 처리
-    clearTimeout(neonTimers.get(it));
-    it.classList.remove('neon-blink'); // 깜빡임 정지, 잔광 유지
-    const t = setTimeout(()=>{
-      it.classList.add('neon-out');
-      it.addEventListener('animationend', function handler(){
-        it.classList.remove('neon','neon-out');
-        it.removeEventListener('animationend', handler);
-      }, {once:true});
-    }, 2000);
-    neonTimers.set(it,t);
-  }, true);
-
-  // vip toggle
-  vip.addEventListener('click', ()=>{
-    const collapsed = center.classList.contains('hero-collapsed');
-    if (socketsWrap.style.display === 'none'){
-      socketsWrap.style.display = ''; // show sockets again for hero view
-    }
-    if (collapsed){
-      openHeroSequence();
-      center.classList.remove('framed');
-    } else {
-      closeHero();
-    }
-  });
-
-  // initial state
-  closeHero();
+  }
+  applyScale();
+  addEventListener('orientationchange',()=>setTimeout(applyScale,300));
+  addEventListener('resize',()=>{ if(innerWidth<=820||document.documentElement.classList.contains('mobile-desktop')) applyScale(); });
 })();
 </script>
 
-<!-- Lightweight console tests (non-visual) -->
+<title>GG2 · 메인</title>
+<style>
+  :root{ --txt:#eaf0f6; --stroke:rgba(255,255,255,.08); --promo-h:180px; --hero-aspect:1/1; --row-speed:4s; --care-speed:1.4s; }
+  *{box-sizing:border-box} html,body{height:100%;margin:0;background:#0b0e13;color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,'Noto Sans KR',sans-serif}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:95vw;margin:0 auto;padding:0 2.5vw}
+  .grid{display:grid;grid-template-columns:280px 1fr;gap:18px;margin-top:18px}
+  .panel{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid var(--stroke);border-radius:12px}
+  .left{padding:10px}
+  .auth-bar{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .auth{height:38px;border-radius:12px;border:1px solid rgba(255,255,255,.14);font-weight:900;cursor:pointer}
+  .btn-join{background:linear-gradient(180deg,#b08cff,#7e65ff);color:#0b0e13}
+  .btn-login{background:linear-gradient(180deg,#7bc7ff,#3aa2ff);color:#001018}
+  .care-toggle{height:40px;border-radius:10px;border:1px solid var(--stroke);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));color:#fff;font-weight:800;cursor:pointer;width:100%}
+  .group{margin-top:12px}
+  .group-hd{height:38px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 10px;border-radius:10px;border:1px solid var(--stroke);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));font-weight:800;color:#fff;width:100%;text-align:left;cursor:pointer}
+  .group-body{max-height:0;overflow:hidden;transition:max-height 1.2s ease;padding:0 10px}
+  .group.open .group-body{max-height:800px}
+  .item{height:36px;display:grid;grid-template-columns:12px 1fr auto;align-items:center;gap:10px;margin:6px 0;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));padding:0 10px;color:#fff}
+  .item .dot{width:7px;height:7px;border-radius:999px;background:#ffc23d;box-shadow:0 0 8px rgba(255,194,61,.45)}
+  .center{position:relative;padding:14px 14px 14px 0}
+  .hero-row{overflow:hidden;height:0;transition:height var(--row-speed) cubic-bezier(.22,.61,.36,1)}
+  .open .hero-row{height:var(--hero-open-h)}
+  .hero-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .hero-card{aspect-ratio:var(--hero-aspect);border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.08);background:#0b0e13;transform:translate3d(0,14px,0);opacity:0;transition:transform var(--care-speed) cubic-bezier(.22,1,.36,1), opacity var(--care-speed) cubic-bezier(.22,1,.36,1)}
+  .hero-card.show{transform:translate3d(0,0,0);opacity:1}
+  .hero-card .img{width:100%;height:100%;background-size:cover;background-position:center}
+  .hero-label{position:absolute;left:14px;bottom:14px;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 10px;display:flex;gap:8px;align-items:center}
+  .hero-label .title{font-weight:900;font-size:12px;padding:4px 6px;border-radius:8px;border:1px solid rgba(255,255,255,.18)}
+  .hero-label .name{font-weight:800}.hero-label .name small{opacity:.85;margin-left:4px}
+  .tg-mini{margin-left:auto;height:28px;min-width:34px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(18,20,26,.9);cursor:pointer}
+  @keyframes softPulse{from{box-shadow:0 0 0 rgba(32,255,216,.0)}to{box-shadow:0 0 28px rgba(32,255,216,.45)}}
+  .hero-card:hover{animation:softPulse 3s ease-in-out infinite alternate}
+  .promo-head{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:var(--promo-h);gap:12px;margin:12px 0}
+  .promo-head .big,.promo-head .cell{position:relative;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.08);background:#0b0e13}
+  .promo-head .big{grid-column:1;grid-row:1 / span 2}
+  .promo-head .right-grid{grid-column:2;grid-row:1 / span 2;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,var(--promo-h));gap:12px}
+  .promo-head .ttl{position:absolute;left:14px;top:10px;font-weight:900;opacity:.9}
+  .content{margin-top:12px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02))}
+  .content-section{display:none;padding:16px 14px}.content-section.active{display:block}
+  .content-section h2{margin:4px 0 10px;font-size:20px;font-weight:900;color:#fff}
+  .modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:100}
+  .modal.show{display:flex}
+  .modal-dim{position:absolute; inset:0; background:rgba(0,0,0,.55); backdrop-filter: blur(2px)}
+  .modal-sheet{position:relative; width:min(900px,92vw); background:#0f131a; border:1px solid rgba(255,255,255,.1); border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.5); transform:translateY(12px); opacity:0; transition:transform .5s cubic-bezier(.22,1,.36,1), opacity .5s cubic-bezier(.22,1,.36,1)}
+  .modal.show .modal-sheet{transform:translateY(0); opacity:1}
+  .modal-head{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08)}
+  .modal-close{width:34px; height:34px; border-radius:10px; border:1px solid rgba(255,255,255,.14); background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03)); color:#fff; cursor:pointer}
+  .modal-body{display:grid; grid-template-columns: 1fr 1fr; gap:16px; padding:16px}
+  .join-form{display:grid; gap:12px}
+  .join-form label{display:grid; gap:6px; font-weight:700}
+  .join-form input{height:42px; border-radius:12px; border:1px solid rgba(255,255,255,.14); background:#0b0e13; color:#fff; padding:0 12px}
+  .btn-cta{height:44px; border-radius:12px; border:1px solid rgba(255,255,255,.16); background:linear-gradient(180deg,#7bc7ff,#3aa2ff); color:#001018; font-weight:900; cursor:pointer}
+  html{scroll-behavior:smooth}
+</style>
+<style id="alty-override-fixRG">
+/* === Alty override: promo bottom-edge alignment with equal row scaling (2025-10-22) === */
+:root { --promo-scale: 1.3; }
+.promo-head { grid-auto-rows: calc(var(--promo-h, 240px) * var(--promo-scale)); }
+.promo-head .right-grid { grid-template-rows: repeat(2, calc(var(--promo-h, 240px) * var(--promo-scale))); }
+.promo-head .big { grid-row: span 2; min-height: 0; background-size: cover; background-position: center; }
+.promo-head .big, .promo-head .cell { display:block; height:100%; }
+</style>
+
+<!-- 연계 팝업(링크) 전용 CSS — 새 클래스만 사용, 기존 레이아웃 영향 없음 -->
+<style>
+  #linkModal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:110}
+  #linkModal.show{display:flex}
+  #linkModal .dim{position:absolute;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(2px)}
+  #linkModal .sheet{position:relative;width:min(560px,92vw);background:#0f131a;border:1px solid rgba(255,255,255,.1);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);padding:16px}
+  #linkModal .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  #linkModal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+  #linkModal .btn{height:40px;padding:0 14px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));color:#fff;cursor:pointer}
+  #linkModal .btn.primary{background:linear-gradient(180deg,#7bc7ff,#3aa2ff);color:#001018}
+  #linkModal a.theLink{display:inline-flex;align-items:center;gap:6px;border:1px dashed rgba(255,255,255,.2);border-radius:10px;padding:8px 10px;color:#9ec7ff;word-break:break-all}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <main class="grid">
+    <aside class="panel left" id="leftNav">
+      <div class="auth-bar">
+        <button class="auth btn-join">가입</button>
+        <button class="auth btn-login">로그인</button>
+      </div>
+      <button class="care-toggle" id="careBtn">당당호출 ▾</button>
+
+      <div class="group open">
+        <button class="group-hd"><span>카테고리</span><span>›</span></button>
+        <div class="group-body">
+          <a class="item" href="#sec-partner-service"><span class="dot"></span><span>🎫 파트너서비스</span><span></span></a>
+          <a class="item" href="#sec-benefits"><span class="dot"></span><span>🧾 등급별 혜택</span><span></span></a>
+          <a class="item" href="#sec-partner-greeting"><span class="dot"></span><span>🎲 파트너인사</span><span></span></a>
+          <a class="item" href="#sec-contact"><span class="dot"></span><span>🧩 문의</span><span></span></a>
+          <a class="item" href="#sec-preference"><span class="dot"></span><span>⭐ 선호도체크</span><span></span></a>
+          <a class="item" href="#sec-quiz-coupon"><span class="dot"></span><span>🏛️ 퀴즈풀고쿠폰받기</span><span></span></a>
+          <a class="item" href="#sec-coupon-apply"><span class="dot"></span><span>✨ 쿠폰신청하기</span><span></span></a>
+        </div>
+      </div>
+
+      <div class="group">
+        <button class="group-hd"><span>프로모션</span><span>›</span></button>
+        <div class="group-body">
+          <a class="item" href="promo.html#official"><span class="dot"></span><span>공식프로모션</span></a>
+          <a class="item" href="promo.html#partner"><span class="dot"></span><span>파트너프로모션</span></a>
+          <a class="item" href="promo.html#now"><span class="dot"></span><span>지금진행중</span></a>
+          <a class="item" href="promo.html#join"><span class="dot"></span><span>프로모션참여</span></a>
+        </div>
+      </div>
+    </aside>
+
+    <section class="panel center" id="centerPanel">
+      <div class="hero-row" id="heroRow">
+        <div class="hero-grid" id="heroGrid">
+          <a class="hero-card" id="hero1"><div class="img" style="background-image:url('assets/hero1.jpg')"></div><div class="hero-label"><span class="title">Mystery Host</span><span class="name">Jayme Sun <small>(제이미 선)</small></span></div></a>
+          <a class="hero-card" id="hero2"><div class="img" style="background-image:url('assets/hero2.jpg')"></div><div class="hero-label"><span class="title">Executive Host</span><span class="name">Tom Woo <small>(탐 우)</small></span><button type="button" class="tg-mini" aria-label="Telegram">↗</button></div></a>
+          <a class="hero-card" id="hero3"><div class="img" style="background-image:url('assets/hero3.jpg')"></div><div class="hero-label"><span class="title">Executive Host</span><span class="name">Jay Hong <small>(재 홍)</small></span></div></a>
+        </div>
+      </div>
+
+      <section class="promo-head" aria-label="Top promo head">
+        <a class="big" id="slotJoin"
+           style="background-image:url('assets/promo_big_join.png');background-size:cover;background-position:center;">
+          <span class="ttl">선호도체크하고쿠폰받기</span>
+        </a>
+
+        <div class="right-grid">
+          <a class="cell" href="promo.html#official"><span class="ttl">공식프로모션</span></a>
+          <a class="cell" href="promo.html#partner"><span class="ttl">파트너프로모션</span></a>
+          <a class="cell" href="promo.html#now"><span class="ttl">지금진행중</span></a>
+          <a class="cell" href="promo.html#join"><span class="ttl">프로모션참여</span></a>
+        </div>
+      </section>
+
+      <div class="content">
+        <section id="sec-partner-service" class="content-section active"><h2>파트너서비스</h2></section>
+        <section id="sec-benefits" class="content-section"><h2>등급별 혜택</h2></section>
+        <section id="sec-quiz-coupon" class="content-section"><h2>퀴즈풀고 쿠폰받기</h2></section>
+        <section id="sec-promo-official" class="content-section"><h2>공식프로모션</h2></section>
+        <section id="sec-promo-partner" class="content-section"><h2>파트너프로모션</h2></section>
+        <section id="sec-promo-now" class="content-section"><h2>지금진행중</h2></section>
+        <section id="sec-promo-join" class="content-section"><h2>프로모션참여</h2></section>
+        <section id="sec-partner-greeting" class="content-section"><h2>파트너인사</h2></section>
+        <section id="sec-contact" class="content-section"><h2>문의</h2></section>
+        <section id="sec-preference" class="content-section"><h2>선호도체크</h2></section>
+        <section id="sec-coupon-apply" class="content-section"><h2>쿠폰신청하기</h2></section>
+        <section id="sec-coupon-new" class="content-section"><h2>신규무료쿠폰</h2></section>
+        <section id="sec-coupon-weekly" class="content-section"><h2>주간플레이쿠폰</h2></section>
+        <section id="sec-coupon-deposit-double" class="content-section"><h2>입금더블업쿠폰</h2></section>
+        <section id="sec-coupon-daily" class="content-section"><h2>일일플레이쿠폰</h2></section>
+        <section id="sec-coupon-host" class="content-section"><h2>담당HOST쿠폰</h2></section>
+        <section id="sec-coupon-surprise" class="content-section"><h2>돌발쿠폰 OFF</h2></section>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- 기존 가입 모달 -->
+<div id="joinModal" class="modal" aria-hidden="true">
+  <div class="modal-dim" data-close></div>
+  <div class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="joinTitle">
+    <div class="modal-head">
+      <h3 id="joinTitle">가입창</h3>
+      <button class="modal-close" data-close aria-label="닫기">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="joinForm" class="join-form">
+        <label>아이디<input type="text" name="userid" required placeholder="아이디"/></label>
+        <label>성함<input type="text" name="fullname" required placeholder="성함"/></label>
+        <label>비밀번호<input type="password" name="pw" required placeholder="비밀번호"/></label>
+        <label>연락처<input type="tel" name="phone" required placeholder="연락처"/></label>
+        <button type="submit" class="btn-cta">가입완료</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 연계 팝업(링크 클릭 시 이동) — 새로 추가 -->
+<div id="linkModal" aria-hidden="true">
+  <div class="dim" data-close></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="linkTitle">
+    <div class="head">
+      <h3 id="linkTitle">가입 완료</h3>
+      <button class="btn" data-close aria-label="닫기">×</button>
+    </div>
+    <p>아래 링크를 클릭하면 다음 페이지로 이동합니다.</p>
+    <p><a class="theLink" id="theLink" href="https://t.me/woo247" target="_self" rel="noopener">https://t.me/woo247</a></p>
+    <div class="actions">
+      <a class="btn primary" id="goNow" href="https://t.me/woo247" target="_self">바로 이동</a>
+    </div>
+  </div>
+</div>
+
 <script>
-(function(){
-  function assert(name, cond){
-    if(!cond){ console.error('❌ Test failed:', name); return false; }
-    console.log('✅', name); return true;
+  // hero dynamic height (square)
+  const centerEl = document.getElementById('centerPanel');
+  const heroRow  = document.getElementById('heroRow');
+  function cardWidth(){ const c = document.querySelector('.hero-card'); return c ? c.getBoundingClientRect().width : 0; }
+  function setHeroOpenHeight(){ const h = cardWidth(); document.documentElement.style.setProperty('--hero-open-h', h + 'px'); return h; }
+  window.addEventListener('resize', ()=>{ if(centerEl.classList.contains('open')) heroRow.style.height = setHeroOpenHeight() + 'px'; });
+  function openCareSeq(){
+    centerEl.classList.add('open');
+    const target = setHeroOpenHeight();
+    heroRow.style.height = '0px'; void heroRow.offsetHeight;
+    heroRow.style.height = target + 'px';
+    const cards = [document.getElementById('hero1'), document.getElementById('hero2'), document.getElementById('hero3')];
+    cards.forEach(c=> c && c.classList.remove('show'));
+    const startDelay = 200, step = 500;
+    if(cards[0]) setTimeout(()=> cards[0].classList.add('show'), startDelay);
+    if(cards[1]) setTimeout(()=> cards[1].classList.add('show'), startDelay+step);
+    if(cards[2]) setTimeout(()=> cards[2].classList.add('show'), startDelay+step*2);
   }
-  // run quick tests after DOM ready
-  document.addEventListener('DOMContentLoaded', ()=>{
-    try{
-      assert('window.__demo exposed', typeof window.__demo === 'object');
-      assert('slideSwapToPage is function', typeof window.__demo.slideSwapToPage === 'function');
-      // invoke with a valid section id; display should toggle immediately
-      window.__demo.slideSwapToPage('sec-partner-service');
-      const page = document.getElementById('sec-partner-service');
-      setTimeout(()=>{
-        assert('section became active', page && page.style.display === 'block' && page.classList.contains('active'));
-      }, 10);
-    }catch(err){
-      console.error('Test harness error:', err);
-    }
+  function closeCare(){ centerEl.classList.remove('open'); heroRow.style.height = '0px'; document.querySelectorAll('.hero-card').forEach(c=> c.classList.remove('show')); }
+  document.getElementById('careBtn').addEventListener('click', (e)=>{ e.preventDefault(); const willOpen = !centerEl.classList.contains('open'); willOpen ? openCareSeq() : closeCare(); });
+
+  // telegram (hero2 mini icon) — 그대로, 링크만 woo247
+  document.querySelector('.tg-mini')?.addEventListener('click', (e)=>{ e.stopPropagation(); window.open('https://t.me/woo247','_self'); });
+
+  // left accordion toggle — 그대로
+  document.getElementById('leftNav').addEventListener('click', (e)=>{
+    const hd = e.target.closest('.group-hd'); if(hd){ e.preventDefault(); hd.closest('.group').classList.toggle('open'); }
   });
-})();
+
+  // hash -> section — 그대로
+  function activateFromHash(){
+    const id = location.hash.replace('#','');
+    if(!id) return;
+    document.querySelectorAll('.content-section').forEach(s=> s.classList.remove('active'));
+    const t = document.getElementById(id);
+    if(t) t.classList.add('active');
+  }
+  window.addEventListener('hashchange', activateFromHash);
+  activateFromHash();
+
+  // join modal — 기존 로직 유지 + 연계 팝업만 추가
+  const joinModal = document.getElementById('joinModal');
+  function openJoin(){ joinModal.classList.add('show'); }
+  function closeJoin(){ joinModal.classList.remove('show'); }
+  document.getElementById('slotJoin').addEventListener('click', (e)=>{ e.preventDefault(); openJoin(); });
+  document.querySelector('.btn-join').addEventListener('click', (e)=>{ e.preventDefault(); openJoin(); });
+  joinModal.addEventListener('click', (e)=>{ if(e.target.hasAttribute('data-close')) closeJoin(); });
+  joinModal.querySelector('.modal-close')?.addEventListener('click', closeJoin);
+
+  // 연계 팝업
+  const linkModal=document.getElementById('linkModal');
+  const goNow=document.getElementById('goNow');
+  const theLink=document.getElementById('theLink');
+  function openLink(){ linkModal.classList.add('show'); linkModal.setAttribute('aria-hidden','false'); }
+  function closeLink(){ linkModal.classList.remove('show'); linkModal.setAttribute('aria-hidden','true'); }
+  linkModal.addEventListener('click', (e)=>{ if(e.target.hasAttribute('data-close')) closeLink(); });
+
+  document.getElementById('joinForm').addEventListener('submit', (e)=>{
+    e.preventDefault();
+    closeJoin();
+    // 성공 처리 후 연계 팝업
+    openLink();
+  });
 </script>
 </body>
 </html>
